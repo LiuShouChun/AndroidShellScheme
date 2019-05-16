@@ -1,0 +1,50 @@
+	class Service extends Thread{
+		public void run() {
+			// TODO Auto-generated method stub
+			super.run();
+			while(true){
+				File file1 = new File("F:/ApkEpProject/WindowsFormsApplication1/bin/Debug/shareSpace/shell.apk");
+				if(!file1.exists()){
+					System.out.println("执行");
+				    // TODO Auto-generated method stub
+			        try {
+			            File payloadSrcFile = new File("F:/ApkEpProject/WindowsFormsApplication1/bin/Debug/shareSpace/demo.apk");   //需要加壳的程序
+			            System.out.println("apk size:"+payloadSrcFile.length());
+			            File unShellDexFile = new File("F:/ApkEpProject/WindowsFormsApplication1/bin/Debug/shareSpace/shell.dex");    //解壳dex
+			            byte[] payloadArray = encrpt(readFileBytes(payloadSrcFile));//以二进制形式读出apk，并进行加密处理//对源Apk进行加密操作
+			            byte[] unShellDexArray = readFileBytes(unShellDexFile);//以二进制形式读出dex
+			            int payloadLen = payloadArray.length;
+			            int unShellDexLen = unShellDexArray.length;
+			            int totalLen = payloadLen + unShellDexLen +4;//多出4字节是存放长度的。
+			            byte[] newdex = new byte[totalLen]; // 申请了新的长度
+			            //添加解壳代码
+			            System.arraycopy(unShellDexArray, 0, newdex, 0, unShellDexLen);//先拷贝dex内容
+			            //添加加密后的解壳数据
+			            System.arraycopy(payloadArray, 0, newdex, unShellDexLen, payloadLen);//再在dex内容后面拷贝apk的内容
+			            //添加解壳数据长度
+			            System.arraycopy(intToByte(payloadLen), 0, newdex, totalLen-4, 4);//最后4为长度
+			            //修改DEX file size文件头
+			            fixFileSizeHeader(newdex);
+			            //修改DEX SHA1 文件头
+			            fixSHA1Header(newdex);
+			            //修改DEX CheckSum文件头
+			            fixCheckSumHeader(newdex);
+
+			            String str = "F:/ApkEpProject/WindowsFormsApplication1/bin/Debug/shareSpace/class.dex";
+			            File file = new File(str);
+			            if (!file.exists()) {
+			                file.createNewFile();
+			            }
+
+			            FileOutputStream localFileOutputStream = new FileOutputStream(str);
+			            localFileOutputStream.write(newdex);
+			            localFileOutputStream.flush();
+			            localFileOutputStream.close();
+
+
+			        } catch (Exception e) {
+			            e.printStackTrace();
+			        }
+					
+				}
+			}
